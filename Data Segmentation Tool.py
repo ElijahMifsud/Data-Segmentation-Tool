@@ -1,6 +1,6 @@
 import csv
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox, QFileDialog
 from PyQt5 import QtGui, QtCore
 
 class Main(QMainWindow):
@@ -31,18 +31,20 @@ class Main(QMainWindow):
         self.uploadButton.setText("Upload")
         font.setPointSize(10)
         self.uploadButton.setFont(font)
+        self.uploadButton.clicked.connect(self.importCSV)
 
-        # fileName
-        self.fileName = QTextEdit(self.centralwidget)
-        self.fileName.setGeometry(QtCore.QRect(290, 190, 250, 30))
+        # filePreview
+        self.filePreview = QTextEdit(self.centralwidget)
+        self.filePreview.setGeometry(QtCore.QRect(290, 160, 250, 60))
+        self.filePreview.setReadOnly(True)
 
-        # SegmantLabel   
-        self.segmantLabel = QLabel(self.centralwidget)
-        self.segmantLabel.setGeometry(QtCore.QRect(100, 260, 100, 31))
-        self.segmantLabel.setText("Segmant:")
+        # segmentLabel   
+        self.segmentLabel = QLabel(self.centralwidget)
+        self.segmentLabel.setGeometry(QtCore.QRect(100, 260, 100, 31))
+        self.segmentLabel.setText("Segment:")
         font.setPointSize(14)
-        self.segmantLabel.setFont(font)
-        self.segmantLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.segmentLabel.setFont(font)
+        self.segmentLabel.setAlignment(QtCore.Qt.AlignCenter)
 
         # UploadLabel
         self.uploadLabel = QLabel(self.centralwidget)
@@ -86,25 +88,36 @@ class Main(QMainWindow):
         font.setBold(False)
         font.setWeight(50)        
 
-        self.segmant1 = QCheckBox(self.widget)
-        self.segmant1.setText("   1")
-        self.segmant1.setFont(font)
-        self.verticalLayout.addWidget(self.segmant1)
+        self.segment1 = QCheckBox(self.widget)
+        self.segment1.setText("   1")
+        self.segment1.setFont(font)
+        self.verticalLayout.addWidget(self.segment1)
 
-        self.segmant2 = QCheckBox(self.widget)
-        self.segmant2.setText("   2")
-        self.segmant2.setFont(font)
-        self.verticalLayout.addWidget(self.segmant2)
+        self.segment2 = QCheckBox(self.widget)
+        self.segment2.setText("   2")
+        self.segment2.setFont(font)
+        self.verticalLayout.addWidget(self.segment2)
 
-        self.segmant3 = QCheckBox(self.widget)
-        self.segmant3.setText("   3")
-        self.segmant3.setFont(font)
-        self.verticalLayout.addWidget(self.segmant3)
+        self.segment3 = QCheckBox(self.widget)
+        self.segment3.setText("   3")
+        self.segment3.setFont(font)
+        self.verticalLayout.addWidget(self.segment3)
 
         self.setCentralWidget(self.centralwidget) 
 
     def importCSV(self):
-        pass
+        file, _ = QFileDialog.getOpenFileName(self,"Open CSV File", "","CSV Files (*.csv)")
+        if file:
+            with open(file, newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                # Skip first row (of headings) 
+                next(reader)
+
+                data = []
+                for row in reader:
+                    data.append(row)
+
+                self.filePreview.setText("Loaded: " + file.split("/")[-1] + "\nTotal Entries: " + str(len(data)) + ".")
 
     def exportCSV(self):
         pass
