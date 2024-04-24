@@ -1,6 +1,7 @@
 import csv
+import pandas as pd
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox
 from PyQt5 import QtGui, QtCore
 
 class Main(QMainWindow):
@@ -50,6 +51,8 @@ class Main(QMainWindow):
         self.uploadLabel.setText("File Upload:")
         self.uploadLabel.setFont(font)
         self.uploadLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.uploadButton.clicked.connect(self.importCSV)
+
 
         # TimeRangeLabel
         self.timeRangeLabel = QLabel(self.centralwidget)
@@ -69,12 +72,14 @@ class Main(QMainWindow):
         self.submitButton.setText("Submit")
         font.setPointSize(10)
         self.submitButton.setFont(font)
+        self.submitButton.clicked.connect(self.submitButtonClicked)
 
         # downloadButton
         self.DownloadButton = QPushButton(self.centralwidget)
         self.DownloadButton.setGeometry(QtCore.QRect(305, 580, 120, 30))
         self.DownloadButton.setText("Download")
         self.DownloadButton.setFont(font)
+        self.DownloadButton.clicked.connect(self.exportCSV)
 
         # verticalLayout
         self.widget = QWidget(self.centralwidget)
@@ -104,11 +109,36 @@ class Main(QMainWindow):
         self.setCentralWidget(self.centralwidget) 
 
     def importCSV(self):
-        pass
+        fname = QFileDialog.getOpenFileName(self, 'Open file', 
+            'c:\\',"CSV files (*.csv)")
+        if fname[0]:
+            self.df = pd.read_csv(fname[0])
+            self.fileName.setText(fname[0])
+
+    def submitButtonClicked(self):
+        segment = int(self.segmant1.text())
+        time_range = list(map(int, self.timeRangeInput.toPlainText().split(',')))
+
+        # Converts Timestamp to a datetime so we can use within dataframes
+        self.df['Timestamp'] = pd.to_datetime(self.df['Timestamp'], format='%Y-%m-%d %H:%M:%S.%f')
+
+        segment_df = self.df[self.df['Segment'] == segment]
+        min_time = segment_df['Timestamp'].min()
+        max_time = segment_df['Timestamp'].max()
+
+        start_time = min_time + pd.Timedelta(seconds=time_range[0])
+        end_time = max_time + pd.Timedelta(seconds=time_range[1])
+
+        self.new_df = self.df[(self.df['Timestamp'] >= start_time) & 
+                             (self.df['Timestamp'] <= end_time)]
 
     def exportCSV(self):
-        pass
+        fname = QFileDialog.getSaveFileName(self, 'Save file', 
+            'c:\\',"CSV files (*.csv)")
+        if fname[0]:
+            self.new_df.to_csv(fname[0], index=False)
     
+
 app = QApplication(sys.argv)
 window = Main()
 window.show()
