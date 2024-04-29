@@ -1,7 +1,7 @@
 import csv
 import pandas as pd
 import sys
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox, QMessageBox
 from PyQt5 import QtGui, QtCore
 
 class Main(QMainWindow):
@@ -9,11 +9,14 @@ class Main(QMainWindow):
         super().__init__()
         self.resize(600, 800)
         self.setupUi()
-
+        
     def setupUi(self):
         self.setWindowTitle("Data Segmentation Tool")
         self.centralwidget = QWidget()
-        
+        self.checkboxList = []
+
+
+
         font = QtGui.QFont()
         font.setPointSize(20)
         font.setBold(True)
@@ -32,6 +35,9 @@ class Main(QMainWindow):
         self.uploadButton.setText("Upload")
         font.setPointSize(10)
         self.uploadButton.setFont(font)
+        self.uploadButton.clicked.connect(self.importCSV)
+        ##self.uploadButton.clicked.connect(self.create_checkboxes(font)) 
+
 
         # fileName
         self.fileName = QTextEdit(self.centralwidget)
@@ -51,7 +57,6 @@ class Main(QMainWindow):
         self.uploadLabel.setText("File Upload:")
         self.uploadLabel.setFont(font)
         self.uploadLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.uploadButton.clicked.connect(self.importCSV)
 
 
         # TimeRangeLabel
@@ -65,7 +70,7 @@ class Main(QMainWindow):
         self.timeRangeInput = QTextEdit(self.centralwidget)
         self.timeRangeInput.setGeometry(QtCore.QRect(305, 300, 121, 31))
         self.timeRangeInput.setObjectName("timeRangeInput")
-
+        
         # submitButton
         self.submitButton = QPushButton(self.centralwidget)
         self.submitButton.setGeometry(QtCore.QRect(305, 540, 120, 30))
@@ -73,6 +78,7 @@ class Main(QMainWindow):
         font.setPointSize(10)
         self.submitButton.setFont(font)
         self.submitButton.clicked.connect(self.submitButtonClicked)
+            
 
         # downloadButton
         self.DownloadButton = QPushButton(self.centralwidget)
@@ -91,22 +97,24 @@ class Main(QMainWindow):
         font.setBold(False)
         font.setWeight(50)        
 
-        self.segmant1 = QCheckBox(self.widget)
-        self.segmant1.setText("   1")
-        self.segmant1.setFont(font)
-        self.verticalLayout.addWidget(self.segmant1)
 
-        self.segmant2 = QCheckBox(self.widget)
-        self.segmant2.setText("   2")
-        self.segmant2.setFont(font)
-        self.verticalLayout.addWidget(self.segmant2)
+        # self.segmant1 = QCheckBox(self.widget)
+        # self.segmant1.setText("   1")
+        # self.segmant1.setFont(font)
+        # self.verticalLayout.addWidget(self.segmant1)
 
-        self.segmant3 = QCheckBox(self.widget)
-        self.segmant3.setText("   3")
-        self.segmant3.setFont(font)
-        self.verticalLayout.addWidget(self.segmant3)
+        # self.segmant2 = QCheckBox(self.widget)
+        # self.segmant2.setText("   2")
+        # self.segmant2.setFont(font)
+        # self.verticalLayout.addWidget(self.segmant2)
+
+        # self.segmant3 = QCheckBox(self.widget)
+        # self.segmant3.setText("   3")
+        # self.segmant3.setFont(font)
+        # self.verticalLayout.addWidget(self.segmant3)
 
         self.setCentralWidget(self.centralwidget) 
+
 
     def importCSV(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file', 
@@ -114,23 +122,48 @@ class Main(QMainWindow):
         if fname[0]:
             self.df = pd.read_csv(fname[0])
             self.fileName.setText(fname[0])
+            self.create_checkboxes()
 
     def submitButtonClicked(self):
-        segment = int(self.segmant1.text())
-        time_range = list(map(int, self.timeRangeInput.toPlainText().split(',')))
+
+        for box in self.checkboxList:
+            if box.isChecked():
+                segment = int(box.text())
+
+        time_range = self.timeRangeInput.toPlainText().split(',')
 
         # Converts Timestamp to a datetime so we can use within dataframes
         self.df['Timestamp'] = pd.to_datetime(self.df['Timestamp'], format='%Y-%m-%d %H:%M:%S.%f')
 
         segment_df = self.df[self.df['Segment'] == segment]
         min_time = segment_df['Timestamp'].min()
-        max_time = segment_df['Timestamp'].max()
 
-        start_time = min_time + pd.Timedelta(seconds=time_range[0])
-        end_time = max_time + pd.Timedelta(seconds=time_range[1])
+        #Validate user input
+        smallest_time = self.df['Timestamp'].min()
+        maximum_time = self.df['Timestamp'].max()
 
-        self.new_df = self.df[(self.df['Timestamp'] >= start_time) & 
-                             (self.df['Timestamp'] <= end_time)]
+        # Check if time_range contains exactly two elements    
+        if len(time_range) != 2:
+            self.buttonConfirmation("Invalid Input two integers are needed. Format: -x,x")
+            return
+
+        # Check if both elements in time_range are integers
+        try:
+            time_range = [int(i) for i in time_range]
+        except ValueError:
+            self.buttonConfirmation("Invalid Input two integers are needed. Format: -x,x ")
+            return     
+
+        if min_time + pd.Timedelta(seconds=time_range[0]) < smallest_time or min_time + pd.Timedelta(seconds=time_range[1]) > maximum_time:
+            self.buttonConfirmation("Invalid min or max time. Format: -x,x")
+        else:
+            start_time = min_time + pd.Timedelta(seconds=time_range[0])
+            end_time = min_time + pd.Timedelta(seconds=time_range[1])
+
+            self.new_df = self.df[(self.df['Timestamp'] >= start_time) & 
+                                (self.df['Timestamp'] <= end_time)]
+
+            self.buttonConfirmation("Submition Successful, Click the Download Button to Save the CSV")
 
     def exportCSV(self):
         fname = QFileDialog.getSaveFileName(self, 'Save file', 
@@ -138,6 +171,35 @@ class Main(QMainWindow):
         if fname[0]:
             self.new_df.to_csv(fname[0], index=False)
     
+    def buttonConfirmation(self, string):
+        msgbox = QMessageBox()
+        msgbox.setWindowTitle("Confirmation")
+        msgbox.setText(string)
+        msgbox.exec()
+
+    def create_checkboxes(self):
+        font = QtGui.QFont()
+        font.setPointSize(15)
+        font.setBold(False)
+        font.setWeight(30) 
+
+        # Get the unique segments from the 'Segment' column
+        segments = self.df['Segment'].unique()
+
+        
+        # Create a checkbox for each segment
+        for i, segment in enumerate(segments, start=1):
+            checkbox = QCheckBox(self.widget)
+            checkbox.setText(f"   {segment}")  # Use the segment value as the checkbox text
+            checkbox.setStyleSheet("QCheckBox::indicator { width: 30px; height: 30px;}")
+            checkbox.setFont(font)
+
+            self.widget.setGeometry(QtCore.QRect(100, 300,81, 300))
+            self.verticalLayout.addWidget(checkbox)
+            self.checkboxList.append(checkbox)
+            
+        self.setCentralWidget(self.centralwidget)
+        
 
 app = QApplication(sys.argv)
 window = Main()
