@@ -36,17 +36,18 @@ class Main(QMainWindow):
         self.uploadButton.setFont(font)
         self.uploadButton.clicked.connect(self.importCSV)
 
-        # fileName
-        self.fileName = QTextEdit(self.centralwidget)
-        self.fileName.setGeometry(QtCore.QRect(290, 190, 250, 30))
+        # filePreview
+        self.filePreview = QTextEdit(self.centralwidget)
+        self.filePreview.setGeometry(QtCore.QRect(290, 160, 250, 60))
+        self.filePreview.setReadOnly(True)
 
-        # SegmantLabel   
-        self.segmantLabel = QLabel(self.centralwidget)
-        self.segmantLabel.setGeometry(QtCore.QRect(100, 260, 100, 31))
-        self.segmantLabel.setText("Segment:")
+        # segmentLabel   
+        self.segmentLabel = QLabel(self.centralwidget)
+        self.segmentLabel.setGeometry(QtCore.QRect(100, 260, 100, 31))
+        self.segmentLabel.setText("Segment:")
         font.setPointSize(14)
-        self.segmantLabel.setFont(font)
-        self.segmantLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.segmentLabel.setFont(font)
+        self.segmentLabel.setAlignment(QtCore.Qt.AlignCenter)
 
         # UploadLabel
         self.uploadLabel = QLabel(self.centralwidget)
@@ -54,7 +55,6 @@ class Main(QMainWindow):
         self.uploadLabel.setText("File Upload:")
         self.uploadLabel.setFont(font)
         self.uploadLabel.setAlignment(QtCore.Qt.AlignCenter)
-
 
         # TimeRangeLabel
         self.timeRangeLabel = QLabel(self.centralwidget)
@@ -74,8 +74,7 @@ class Main(QMainWindow):
         self.submitButton.setText("Submit")
         font.setPointSize(10)
         self.submitButton.setFont(font)
-        self.submitButton.clicked.connect(self.submitButtonClicked)
-            
+        self.submitButton.clicked.connect(self.submitButtonClicked)      
 
         # downloadButton
         self.DownloadButton = QPushButton(self.centralwidget)
@@ -92,14 +91,13 @@ class Main(QMainWindow):
 
         self.setCentralWidget(self.centralwidget) 
 
-
     def importCSV(self):
         # Picks the file to be imported
         fname = QFileDialog.getOpenFileName(self, 'Open file', 
             'c:\\',"CSV files (*.csv)")
         if fname[0]:
             self.df = pd.read_csv(fname[0])
-            self.fileName.setText(fname[0])
+            self.filePreview.setText(fname[0])
             self.create_checkboxes()
 
     def submitButtonClicked(self):
