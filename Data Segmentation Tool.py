@@ -1,18 +1,17 @@
-import csv
 import pandas as pd
 import sys
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QWidget, QLabel, QPushButton, QTextEdit, QVBoxLayout, QCheckBox, QMessageBox
+from PyQt5.QtWidgets import *
 from PyQt5 import QtGui, QtCore
 
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.resize(600, 800)
+        self.resize(600, 600)
         self.setupUi()
         
     def setupUi(self):
         self.setWindowTitle("Data Segmentation Tool")
-        self.centralwidget = QWidget()
+        self.mainWidget = QWidget()
         self.checkboxList = []
         self.dataFrame_List = []
 
@@ -22,74 +21,119 @@ class Main(QMainWindow):
         font.setWeight(75)
 
         # Header 
-        self.Header = QLabel(self.centralwidget)
-        self.Header.setGeometry(QtCore.QRect(40, 25, 520, 70))
-        self.Header.setText("Detecting the Onset of Cybersickness \n" " using Physiological Data")
+        self.Header = QLabel(self.mainWidget)
+        self.Header.setGeometry(QtCore.QRect(50, 0, 500, 51))
+        self.Header.setText("Data Segmentation Tool")
         self.Header.setFont(font)
         self.Header.setAlignment(QtCore.Qt.AlignCenter)
-        
+
+        font.setPointSize(12)
+        font.setBold(False)
+        font.setWeight(50)
+
+        # Header 2
+        self.Header2 = QLabel(self.mainWidget)
+        self.Header2.setGeometry(QtCore.QRect(40, 25, 520, 70))
+        self.Header2.setText("Detecting the Onset of Motion Sickness in VR using Physiological Data.")
+        self.Header2.setFont(font)
+        self.Header2.setAlignment(QtCore.Qt.AlignCenter)
+
+        font.setBold(True)
+        font.setPointSize(10)        
+
         # uploadButton
-        self.uploadButton = QPushButton(self.centralwidget)
-        self.uploadButton.setGeometry(QtCore.QRect(90, 190, 120, 30))
+        self.uploadButton = QPushButton(self.mainWidget)
+        self.uploadButton.setGeometry(QtCore.QRect(90, 130, 120, 30))
         self.uploadButton.setText("Upload")
-        font.setPointSize(10)
         self.uploadButton.setFont(font)
         self.uploadButton.clicked.connect(self.importCSV)
 
-        # filePreview
-        self.filePreview = QTextEdit(self.centralwidget)
-        self.filePreview.setGeometry(QtCore.QRect(290, 160, 250, 60))
-        self.filePreview.setReadOnly(True)
+        # filePathPreview
+        self.filePathPreview = QTextEdit(self.mainWidget)
+        self.filePathPreview.setGeometry(QtCore.QRect(290, 135, 250, 60))
+        self.filePathPreview.setReadOnly(True)
 
-        # segmentLabel   
-        self.segmentLabel = QLabel(self.centralwidget)
-        self.segmentLabel.setGeometry(QtCore.QRect(100, 260, 100, 31))
-        self.segmentLabel.setText("Segment:")
         font.setPointSize(14)
-        self.segmentLabel.setFont(font)
-        self.segmentLabel.setAlignment(QtCore.Qt.AlignCenter)
 
         # UploadLabel
-        self.uploadLabel = QLabel(self.centralwidget)
-        self.uploadLabel.setGeometry(QtCore.QRect(90, 150, 121, 31))
-        self.uploadLabel.setText("File Upload:")
+        self.uploadLabel = QLabel(self.mainWidget)
+        self.uploadLabel.setGeometry(QtCore.QRect(75, 100, 150, 30))
+        self.uploadLabel.setText("(1) File Upload:")
         self.uploadLabel.setFont(font)
         self.uploadLabel.setAlignment(QtCore.Qt.AlignCenter)
 
+        # PathPreviewLabel
+        self.pathPreviewLabel = QLabel(self.mainWidget)
+        self.pathPreviewLabel.setGeometry(QtCore.QRect(290, 100, 140, 30))
+        self.pathPreviewLabel.setText("Path Preview:")
+        self.pathPreviewLabel.setFont(font)
+        self.pathPreviewLabel.setAlignment(QtCore.Qt.AlignCenter)
+
+        # SegmentLabel   
+        self.segmentLabel = QLabel(self.mainWidget)
+        self.segmentLabel.setGeometry(QtCore.QRect(50, 220, 210, 30))
+        self.segmentLabel.setText("(2) Select Segment/s:")
+        self.segmentLabel.setFont(font)
+        self.segmentLabel.setAlignment(QtCore.Qt.AlignCenter)
+        
+        # Line
+        self.line = QFrame(self.mainWidget)
+        self.line.setFrameShape(QFrame.HLine)
+        self.line.setFrameShadow(QFrame.Sunken)
+        self.line.setGeometry(QtCore.QRect(60, 240, 200, 31))
+
         # TimeRangeLabel
-        self.timeRangeLabel = QLabel(self.centralwidget)
-        self.timeRangeLabel.setGeometry(QtCore.QRect(300, 260, 131, 31))
-        self.timeRangeLabel.setText("Time Range:")
+        self.timeRangeLabel = QLabel(self.mainWidget)
+        self.timeRangeLabel.setGeometry(QtCore.QRect(290, 220, 161, 31))
+        self.timeRangeLabel.setText("(3) Time Range:")
         self.timeRangeLabel.setFont(font)
         self.timeRangeLabel.setAlignment(QtCore.Qt.AlignCenter)
 
-        # TimeRangeInput
-        self.timeRangeInput = QTextEdit(self.centralwidget)
-        self.timeRangeInput.setGeometry(QtCore.QRect(305, 300, 121, 31))
-        self.timeRangeInput.setObjectName("timeRangeInput")
-        
-        # submitButton
-        self.submitButton = QPushButton(self.centralwidget)
-        self.submitButton.setGeometry(QtCore.QRect(305, 540, 120, 30))
-        self.submitButton.setText("Submit")
-        font.setPointSize(10)
-        self.submitButton.setFont(font)
-        self.submitButton.clicked.connect(self.submitButtonClicked)      
+        # submit/downloadLabel
+        self.submitDownloadLabel = QLabel(self.mainWidget)
+        self.submitDownloadLabel.setGeometry(QtCore.QRect(290, 365, 250, 31))
+        self.submitDownloadLabel.setText("(4) Submit & Download:")
+        self.submitDownloadLabel.setFont(font)
+        self.submitDownloadLabel.setAlignment(QtCore.Qt.AlignCenter)
 
+        font.setPointSize(10)
+        font.setBold(False)
+
+        # TimeRangeText
+        self.timeRangeText = QLabel(self.mainWidget)
+        self.timeRangeText.setFont(font)
+        self.timeRangeText.setWordWrap(True)
+        self.timeRangeText.setText("Input a time range (in seconds) separated by a comma. For Example: \nInput \'-10,10\' to capture 10 seconds above and below selected segments.")
+        self.timeRangeText.setGeometry(QtCore.QRect(295, 280, 250, 100))
+
+        # TimeRangeInput
+        self.timeRangeInput = QTextEdit(self.mainWidget)
+        self.timeRangeInput.setGeometry(QtCore.QRect(295, 255, 121, 31))
+        self.timeRangeInput.setObjectName("timeRangeInput")
+        self.timeRangeInput.setAlignment(QtCore.Qt.AlignCenter)
+        
+        font.setBold(True)
+
+        # submitButton
+        self.submitButton = QPushButton(self.mainWidget)
+        self.submitButton.setGeometry(QtCore.QRect(295, 400, 120, 30))
+        self.submitButton.setText("Submit")
+        self.submitButton.setFont(font)
+        self.submitButton.clicked.connect(self.submitButtonClicked)
+            
         # downloadButton
-        self.DownloadButton = QPushButton(self.centralwidget)
-        self.DownloadButton.setGeometry(QtCore.QRect(305, 580, 120, 30))
+        self.DownloadButton = QPushButton(self.mainWidget)
+        self.DownloadButton.setGeometry(QtCore.QRect(420, 400, 120, 30))
         self.DownloadButton.setText("Download")
         self.DownloadButton.setFont(font)
         self.DownloadButton.clicked.connect(self.exportCSV)
 
         # verticalLayout
-        self.widget = QWidget(self.centralwidget)
-        self.widget.setGeometry(QtCore.QRect(110, 300, 81, 83))
+        self.widget = QWidget(self.mainWidget)
+        self.widget.setGeometry(QtCore.QRect(110, 200, 80, 100))
         self.verticalLayout = QVBoxLayout(self.widget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.setCentralWidget(self.centralwidget) 
+        self.setCentralWidget(self.mainWidget) 
 
     def importCSV(self):
         # Picks the file to be imported
@@ -97,7 +141,7 @@ class Main(QMainWindow):
             'c:\\',"CSV files (*.csv)")
         if fname[0]:
             self.df = pd.read_csv(fname[0])
-            self.filePreview.setText(fname[0])
+            self.filePathPreview.setText(fname[0])
             self.create_checkboxes()
 
     def submitButtonClicked(self):
@@ -136,8 +180,7 @@ class Main(QMainWindow):
 
             if min_time + pd.Timedelta(seconds=time_range[0]) < smallest_time or min_time + pd.Timedelta(seconds=time_range[1]) > maximum_time:
                 self.buttonConfirmation("Invalid Min or Max time. Format: -x,x")
-                return
-            
+                return 
             else:
                 # Converts the time_range user input
                 start_time = min_time + pd.Timedelta(seconds=time_range[0])
@@ -186,13 +229,13 @@ class Main(QMainWindow):
             checkbox.setFont(font)
             # Adds correct spacing to larger number of segments
             if segments.size > 4:
-                self.widget.setGeometry(QtCore.QRect(100, 300,81, 300))
-            elif  segments.size <= 4:
-                self.widget.setGeometry(QtCore.QRect(100, 300,81, 100))
+                self.widget.setGeometry(QtCore.QRect(100, 270, 81, 300))
+            elif segments.size <= 4:
+                self.widget.setGeometry(QtCore.QRect(100, 270, 81, 100))
             self.verticalLayout.addWidget(checkbox)
             self.checkboxList.append(checkbox)
             
-        self.setCentralWidget(self.centralwidget)
+        self.setCentralWidget(self.mainWidget)
         
     def clear_checkboxes(self):
         # Clear the list of checkboxes
@@ -200,8 +243,7 @@ class Main(QMainWindow):
             self.verticalLayout.removeWidget(checkbox)
             checkbox.deleteLater()  
         self.checkboxList.clear()  
-
-        
+    
 app = QApplication(sys.argv)
 window = Main()
 window.show()
