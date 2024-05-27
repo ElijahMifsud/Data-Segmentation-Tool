@@ -91,7 +91,7 @@ class Main(QMainWindow):
 
         # submit/downloadLabel
         self.submitDownloadLabel = QLabel(self.mainWidget)
-        self.submitDownloadLabel.setGeometry(QtCore.QRect(290, 365, 250, 31))
+        self.submitDownloadLabel.setGeometry(QtCore.QRect(290, 510, 250, 31))
         self.submitDownloadLabel.setText("(4) Submit & Download:")
         self.submitDownloadLabel.setFont(font)
         self.submitDownloadLabel.setAlignment(QtCore.Qt.AlignCenter)
@@ -103,8 +103,12 @@ class Main(QMainWindow):
         self.timeRangeText = QLabel(self.mainWidget)
         self.timeRangeText.setFont(font)
         self.timeRangeText.setWordWrap(True)
-        self.timeRangeText.setText("Input a time range (in seconds) separated by a comma. For Example: \nInput \'-10,10\' to capture 10 seconds above and below selected segments.")
-        self.timeRangeText.setGeometry(QtCore.QRect(295, 280, 250, 100))
+        self.timeRangeText.setText("Input a time range (in seconds) separated by a comma to designate partition." +
+                                    "\nFor Example: \n" + 
+                                    "\n• Input \'0,0\' to extract the, unchanged, selected partitions. \n" + 
+                                    "\n• Input \'5,-5\' to remove 5 seconds from the start and end of the selected partitions.\n" + 
+                                    "\n• Input \'-10,10\' to capture 10 seconds above and below the selected segments.\n")
+        self.timeRangeText.setGeometry(QtCore.QRect(295, 200, 250, 400))
 
         # TimeRangeInput
         self.timeRangeInput = QTextEdit(self.mainWidget)
@@ -116,14 +120,14 @@ class Main(QMainWindow):
 
         # submitButton
         self.submitButton = QPushButton(self.mainWidget)
-        self.submitButton.setGeometry(QtCore.QRect(295, 400, 120, 30))
+        self.submitButton.setGeometry(QtCore.QRect(295, 550, 120, 30))
         self.submitButton.setText("Submit")
         self.submitButton.setFont(font)
         self.submitButton.clicked.connect(self.submitButtonClicked)
             
         # downloadButton
         self.DownloadButton = QPushButton(self.mainWidget)
-        self.DownloadButton.setGeometry(QtCore.QRect(420, 400, 120, 30))
+        self.DownloadButton.setGeometry(QtCore.QRect(420, 550, 120, 30))
         self.DownloadButton.setText("Download")
         self.DownloadButton.setFont(font)
         self.DownloadButton.clicked.connect(self.exportCSV)
@@ -159,38 +163,29 @@ class Main(QMainWindow):
             # Converts Timestamp to a datetime so we can use within dataframes
             self.df['Timestamp'] = pd.to_datetime(self.df['Timestamp'], format='%Y-%m-%d %H:%M:%S.%f')
 
+            # Get segment information
             segment_df = self.df[self.df['Segment'] == segment]
             min_time = segment_df['Timestamp'].min()
-
-            # Validate user input
-            smallest_time = self.df['Timestamp'].min()
-            maximum_time = self.df['Timestamp'].max()
+            max_time = segment_df['Timestamp'].max()
 
             # Check if time_range contains exactly two elements    
             if len(time_range) != 2:
-                self.buttonConfirmation("Invalid Input two integers are needed. Format: -x,x")
+                self.buttonConfirmation("Invalid Input. Please input two integers. Format: -x,x")
                 return
 
             # Check if both elements in time_range are integers
             try:
                 time_range = [int(i) for i in time_range]
             except ValueError:
-                self.buttonConfirmation("Invalid Input Two Integers are needed. Format: -x,x ")
+                self.buttonConfirmation("Invalid Input. Please input two integers. Format: -x,x ")
                 return     
 
-            if min_time + pd.Timedelta(seconds=time_range[0]) < smallest_time or min_time + pd.Timedelta(seconds=time_range[1]) > maximum_time:
-                self.buttonConfirmation("Invalid Min or Max time. Format: -x,x")
-                return 
-            else:
-                # Converts the time_range user input
-                start_time = min_time + pd.Timedelta(seconds=time_range[0])
-                end_time = min_time + pd.Timedelta(seconds=time_range[1])
+            # Calculate the target time
+            start_time = min_time + pd.Timedelta(seconds=time_range[0])
+            end_time = max_time + pd.Timedelta(seconds=time_range[1])
 
-                # Makes a new dataframe from the start and end times selected and adds to a dataframe list
-                new_df = self.df[(self.df['Timestamp'] >= start_time) & 
-                                    (self.df['Timestamp'] <= end_time)]
-                
-                self.dataFrame_List.append(new_df)
+            # Create new dataframe and add to list of complete segmentations 
+            self.dataFrame_List.append(self.df[(self.df['Timestamp'] >= start_time) & (self.df['Timestamp'] <= end_time)])
 
         self.buttonConfirmation("Submission Successful, Click the Download Button to Save the CSV File/s")
 
